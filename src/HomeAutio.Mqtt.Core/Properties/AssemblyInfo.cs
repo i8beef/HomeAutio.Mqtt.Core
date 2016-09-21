@@ -6,9 +6,9 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("HomeAutio.Mqtt.Core")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Base library for HomeAutio Mqtt bridges")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("Michael Hallock")]
 [assembly: AssemblyProduct("HomeAutio.Mqtt.Core")]
 [assembly: AssemblyCopyright("Copyright ©  2016")]
 [assembly: AssemblyTrademark("")]
