@@ -67,6 +67,7 @@
     <Compile Include="Utility\StringExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="HomeAutio.Mqtt.Core.nuspec" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
