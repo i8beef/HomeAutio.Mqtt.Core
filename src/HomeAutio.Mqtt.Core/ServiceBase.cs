@@ -49,8 +49,7 @@ namespace HomeAutio.Mqtt.Core
                 if (!_stopping)
                 {
                     // Unexpected disconnect, restart service
-                    _serviceLog.Error("MQTT Connection closed unexpectedly");
-                    Stop();
+                    throw new Exception("MQTT Connection closed unexpectedly");
                 }
                 else
                 {
