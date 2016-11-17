@@ -113,12 +113,13 @@ namespace HomeAutio.Mqtt.Core
                 _serviceLog.Debug("Service stop initiated");
 
                 _stopping = true;
-                Unsubscribe();
-
                 StopService();
 
                 if (_mqttClient.IsConnected)
+                {
+                    Unsubscribe();
                     _mqttClient.Disconnect();
+                }
 
                 _serviceLog.Debug("Service stopped successfully");
             }
@@ -145,10 +146,17 @@ namespace HomeAutio.Mqtt.Core
         /// </summary>
         protected virtual void Subscribe()
         {
-            _serviceLog.Debug("MQTT subscribing to the following topics: " + string.Join(", ", _subscribedTopics));
+            if (_mqttClient.IsConnected)
+            {
+                _serviceLog.Debug("MQTT subscribing to the following topics: " + string.Join(", ", _subscribedTopics));
 
-            var qosLevels = _subscribedTopics.Select(x => MqttMsgBase.QOS_LEVEL_AT_LEAST_ONCE).ToArray();
-            _mqttClient.Subscribe(_subscribedTopics.ToArray(), qosLevels);
+                var qosLevels = _subscribedTopics.Select(x => MqttMsgBase.QOS_LEVEL_AT_LEAST_ONCE).ToArray();
+                _mqttClient.Subscribe(_subscribedTopics.ToArray(), qosLevels);
+            }
+            else
+            {
+                _serviceLog.Debug("MQTT could not subscribe to topics on disconnected client");
+            }
         }
 
         /// <summary>
@@ -161,6 +169,10 @@ namespace HomeAutio.Mqtt.Core
             {
                 _serviceLog.Debug("MQTT unsubscribing to the following topics: " + string.Join(", ", _subscribedTopics));
                 _mqttClient.Unsubscribe(_subscribedTopics.ToArray());
+            }
+            else
+            {
+                _serviceLog.Debug("MQTT could not unsubscribe from topics on disconnected client");
             }
         }
 
