@@ -10,6 +10,7 @@ namespace HomeAutio.Mqtt.Core
     public abstract class ServiceBase
     {
         private ILogger _serviceLog = LogManager.GetCurrentClassLogger();
+        private bool _stopping;
 
         protected MqttClient _mqttClient;
         protected string _brokerUsername;
@@ -44,7 +45,18 @@ namespace HomeAutio.Mqtt.Core
             _mqttClient.MqttMsgPublished += (object sender, MqttMsgPublishedEventArgs e) => { _serviceLog.Debug("MQTT message id " + e.MessageId + " sent successfully"); };
             _mqttClient.MqttMsgSubscribed += (object sender, MqttMsgSubscribedEventArgs e) => { _serviceLog.Debug("MQTT subscribe successful with message id " + e.MessageId); };
             _mqttClient.MqttMsgUnsubscribed += (object sender, MqttMsgUnsubscribedEventArgs e) => { _serviceLog.Debug("MQTT unsubscribe successful with message id " + e.MessageId); };
-            _mqttClient.ConnectionClosed += (object sender, EventArgs e) => { _serviceLog.Debug("MQTT Connection closed"); Unsubscribe(); };
+            _mqttClient.ConnectionClosed += (object sender, EventArgs e) => {
+                if (!_stopping)
+                {
+                    // Unexpected disconnect, restart service
+                    _serviceLog.Error("MQTT Connection closed unexpectedly");
+                    Stop();
+                }
+                else
+                {
+                    _serviceLog.Debug("MQTT Connection closed");
+                }
+            };
         }
 
         #region Service implementation
@@ -67,12 +79,15 @@ namespace HomeAutio.Mqtt.Core
             try
             {
                 _serviceLog.Debug("Service start initiated");
+                _stopping = false;
 
                 // Connect to MQTT
                 if (!string.IsNullOrEmpty(_brokerUsername) && !string.IsNullOrEmpty(_brokerPassword))
                     _mqttClient.Connect(_mqttClientId.ToString(), _brokerUsername, _brokerPassword);
                 else
                     _mqttClient.Connect(_mqttClientId.ToString());
+
+                _serviceLog.Debug("Service start initiated");
 
                 // Subscribe to MQTT messages
                 Subscribe();
@@ -97,11 +112,13 @@ namespace HomeAutio.Mqtt.Core
             {
                 _serviceLog.Debug("Service stop initiated");
 
+                _stopping = true;
                 Unsubscribe();
 
                 StopService();
 
-                _mqttClient.Disconnect();
+                if (_mqttClient.IsConnected)
+                    _mqttClient.Disconnect();
 
                 _serviceLog.Debug("Service stopped successfully");
             }
