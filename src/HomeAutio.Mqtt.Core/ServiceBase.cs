@@ -29,6 +29,7 @@ namespace HomeAutio.Mqtt.Core
         /// <param name="topicRoot">MQTT topic root.</param>
         public ServiceBase(string brokerIp, int brokerPort, string brokerUsername, string brokerPassword, string topicRoot)
         {
+            SubscribedTopics = new List<string>();
             _brokerUsername = brokerUsername;
             _brokerPassword = brokerPassword;
 
@@ -84,7 +85,7 @@ namespace HomeAutio.Mqtt.Core
         /// <summary>
         /// Holds list of active MQTT subscriptions.
         /// </summary>
-        protected IList<string> SubscribedTopics { get; set; }
+        protected IList<string> SubscribedTopics { get; private set; }
 
         /// <summary>
         /// MQTT Topic root.
