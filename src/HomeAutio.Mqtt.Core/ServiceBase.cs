@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MQTTnet;
 using MQTTnet.Client;
@@ -12,7 +14,7 @@ namespace HomeAutio.Mqtt.Core
     /// <summary>
     /// Service base class for HomeAutio services.
     /// </summary>
-    public abstract class ServiceBase : IDisposable
+    public abstract class ServiceBase : IHostedService, IDisposable
     {
         private readonly ILogger<ServiceBase> _serviceLog;
 
@@ -109,8 +111,9 @@ namespace HomeAutio.Mqtt.Core
         /// <summary>
         /// Service Start action. Do not call this directly.
         /// </summary>
+        /// <param name="cancellationToken">Cancelation token.</param>
         /// <returns>Awaitable <see cref="Task" />.</returns>
-        public async Task StartAsync()
+        public async Task StartAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             _serviceLog.LogInformation("Service start initiated");
             _stopping = false;
@@ -127,10 +130,10 @@ namespace HomeAutio.Mqtt.Core
             await MqttClient.ConnectAsync(optionsBuilder.Build()).ConfigureAwait(false);
 
             // Subscribe to MQTT messages
-            await SubscribeAsync().ConfigureAwait(false);
+            await SubscribeAsync(cancellationToken).ConfigureAwait(false);
 
             // Call startup on inheriting service class
-            await StartServiceAsync().ConfigureAwait(false);
+            await StartServiceAsync(cancellationToken).ConfigureAwait(false);
 
             _serviceLog.LogInformation("Service started successfully");
         }
@@ -138,8 +141,9 @@ namespace HomeAutio.Mqtt.Core
         /// <summary>
         /// Service Stop action. Do not call this directly.
         /// </summary>
+        /// <param name="cancellationToken">Cancelation token.</param>
         /// <returns>Awaitable <see cref="Task" />.</returns>
-        public async Task StopAsync()
+        public async Task StopAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             _serviceLog.LogInformation("Service stop initiated");
 
@@ -148,10 +152,10 @@ namespace HomeAutio.Mqtt.Core
             try
             {
                 // Stop inheriting service class
-                await StopServiceAsync().ConfigureAwait(false);
+                await StopServiceAsync(cancellationToken).ConfigureAwait(false);
 
                 // Graceful MQTT disconnect
-                await Unsubscribe().ConfigureAwait(false);
+                await Unsubscribe(cancellationToken).ConfigureAwait(false);
                 await MqttClient.DisconnectAsync().ConfigureAwait(false);
             }
             catch (Exception ex)
@@ -168,14 +172,16 @@ namespace HomeAutio.Mqtt.Core
         /// <summary>
         /// HomeAutio service start.
         /// </summary>
+        /// <param name="cancellationToken">Cancelation token.</param>
         /// <returns>Awaitable <see cref="Task" />.</returns>
-        protected abstract Task StartServiceAsync();
+        protected abstract Task StartServiceAsync(CancellationToken cancellationToken);
 
         /// <summary>
         /// HomeAutio service stop.
         /// </summary>
+        /// <param name="cancellationToken">Cancelation token.</param>
         /// <returns>Awaitable <see cref="Task" />.</returns>
-        protected abstract Task StopServiceAsync();
+        protected abstract Task StopServiceAsync(CancellationToken cancellationToken);
 
         #endregion
 
@@ -191,8 +197,9 @@ namespace HomeAutio.Mqtt.Core
         /// <summary>
         /// Subscribes to the MQTT topics in SubscribedTopics.
         /// </summary>
+        /// <param name="cancellationToken">Cancelation token.</param>
         /// <returns>Awaitable <see cref="Task" />.</returns>
-        protected virtual async Task SubscribeAsync()
+        protected virtual async Task SubscribeAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             if (MqttClient.IsConnected)
             {
@@ -212,8 +219,9 @@ namespace HomeAutio.Mqtt.Core
         /// <summary>
         /// Unsubscribes from the MQTT topics in SubscribedTopics.
         /// </summary>
+        /// <param name="cancellationToken">Cancelation token.</param>
         /// <returns>Awaitable <see cref="Task" />.</returns>
-        protected virtual async Task Unsubscribe()
+        protected virtual async Task Unsubscribe(CancellationToken cancellationToken = default(CancellationToken))
         {
             // Wipe subscriptions
             if (MqttClient.IsConnected)
@@ -244,7 +252,7 @@ namespace HomeAutio.Mqtt.Core
             {
                 // Dispose managed state (managed objects).
                 if (MqttClient != null)
-                    ((IDisposable)MqttClient).Dispose();
+                    (MqttClient as IDisposable)?.Dispose();
             }
 
             _disposed = true;
