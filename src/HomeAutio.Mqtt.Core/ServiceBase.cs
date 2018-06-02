@@ -167,8 +167,11 @@ namespace HomeAutio.Mqtt.Core
                 await StopServiceAsync(cancellationToken).ConfigureAwait(false);
 
                 // Graceful MQTT disconnect
-                await Unsubscribe(cancellationToken).ConfigureAwait(false);
-                await MqttClient.DisconnectAsync().ConfigureAwait(false);
+                if (MqttClient.IsConnected)
+                {
+                    await Unsubscribe(cancellationToken).ConfigureAwait(false);
+                    await MqttClient.DisconnectAsync().ConfigureAwait(false);
+                }
             }
             catch (Exception ex)
             {
