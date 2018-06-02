@@ -29,14 +29,16 @@ namespace HomeAutio.Mqtt.Core
         /// <summary>
         /// Initializes a new instance of the <see cref="ServiceBase"/> class.
         /// </summary>
+        /// <param name="applicationLifetime">Application lifetime instance.</param>
         /// <param name="logger">Logging instance.</param>
         /// <param name="brokerIp">MQTT broker IP.</param>
         /// <param name="brokerPort">MQTT broker port.</param>
         /// <param name="brokerUsername">MQTT broker username.</param>
         /// <param name="brokerPassword">MQTT broker password.</param>
         /// <param name="topicRoot">MQTT topic root.</param>
-        public ServiceBase(ILogger<ServiceBase> logger, string brokerIp, int brokerPort, string brokerUsername, string brokerPassword, string topicRoot)
+        public ServiceBase(IApplicationLifetime applicationLifetime, ILogger<ServiceBase> logger, string brokerIp, int brokerPort, string brokerUsername, string brokerPassword, string topicRoot)
         {
+            ApplicationLifetime = applicationLifetime;
             _serviceLog = logger;
             _brokerIp = brokerIp;
             _brokerPort = brokerPort;
@@ -48,6 +50,11 @@ namespace HomeAutio.Mqtt.Core
             SetupMqttLogging();
             MqttClient.ApplicationMessageReceived += Mqtt_MqttMsgPublishReceived;
         }
+
+        /// <summary>
+        /// Application lifetime for control and eventing.
+        /// </summary>
+        protected IApplicationLifetime ApplicationLifetime { get; private set; }
 
         /// <summary>
         /// MQTT client.
@@ -100,9 +107,14 @@ namespace HomeAutio.Mqtt.Core
             MqttClient.Disconnected += (sender, e) =>
             {
                 if (!_stopping)
-                    throw new Exception("MQTT Connection closed unexpectedly");
+                {
+                    _serviceLog.LogInformation("MQTT Connection closed unexpectedly");
+                    ApplicationLifetime.StopApplication();
+                }
                 else
+                {
                     _serviceLog.LogInformation("MQTT Connection closed");
+                }
             };
         }
 
