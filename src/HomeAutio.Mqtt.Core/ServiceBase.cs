@@ -36,7 +36,14 @@ namespace HomeAutio.Mqtt.Core
         /// <param name="brokerUsername">MQTT broker username.</param>
         /// <param name="brokerPassword">MQTT broker password.</param>
         /// <param name="topicRoot">MQTT topic root.</param>
-        public ServiceBase(IApplicationLifetime applicationLifetime, ILogger<ServiceBase> logger, string brokerIp, int brokerPort, string brokerUsername, string brokerPassword, string topicRoot)
+        public ServiceBase(
+            IApplicationLifetime applicationLifetime,
+            ILogger<ServiceBase> logger,
+            string brokerIp,
+            int brokerPort,
+            string brokerUsername,
+            string brokerPassword,
+            string topicRoot)
         {
             ApplicationLifetime = applicationLifetime;
             _serviceLog = logger;
@@ -139,13 +146,16 @@ namespace HomeAutio.Mqtt.Core
                 optionsBuilder.WithCredentials(_brokerUsername, _brokerPassword);
 
             // Connect to MQTT
-            await MqttClient.ConnectAsync(optionsBuilder.Build()).ConfigureAwait(false);
+            await MqttClient.ConnectAsync(optionsBuilder.Build())
+                .ConfigureAwait(false);
 
             // Subscribe to MQTT messages
-            await SubscribeAsync(cancellationToken).ConfigureAwait(false);
+            await SubscribeAsync(cancellationToken)
+                .ConfigureAwait(false);
 
             // Call startup on inheriting service class
-            await StartServiceAsync(cancellationToken).ConfigureAwait(false);
+            await StartServiceAsync(cancellationToken)
+                .ConfigureAwait(false);
 
             _serviceLog.LogInformation("Service started successfully");
         }
@@ -164,13 +174,16 @@ namespace HomeAutio.Mqtt.Core
             try
             {
                 // Stop inheriting service class
-                await StopServiceAsync(cancellationToken).ConfigureAwait(false);
+                await StopServiceAsync(cancellationToken)
+                    .ConfigureAwait(false);
 
                 // Graceful MQTT disconnect
                 if (MqttClient.IsConnected)
                 {
-                    await Unsubscribe(cancellationToken).ConfigureAwait(false);
-                    await MqttClient.DisconnectAsync().ConfigureAwait(false);
+                    await Unsubscribe(cancellationToken)
+                        .ConfigureAwait(false);
+                    await MqttClient.DisconnectAsync()
+                        .ConfigureAwait(false);
                 }
             }
             catch (Exception ex)
@@ -178,8 +191,6 @@ namespace HomeAutio.Mqtt.Core
                 // Log error, but do not rethrow, Dispose should not throw exceptions.
                 _serviceLog.LogError(ex, ex.Message);
             }
-
-            Dispose();
 
             _serviceLog.LogInformation("Service stopped successfully");
         }
@@ -223,7 +234,8 @@ namespace HomeAutio.Mqtt.Core
                     .Select(topic => new TopicFilterBuilder()
                         .WithTopic(topic)
                         .WithAtLeastOnceQoS()
-                        .Build())).ConfigureAwait(false);
+                        .Build()))
+                    .ConfigureAwait(false);
             }
             else
             {
@@ -242,7 +254,8 @@ namespace HomeAutio.Mqtt.Core
             if (MqttClient.IsConnected)
             {
                 _serviceLog.LogDebug("MQTT unsubscribing to the following topics: " + string.Join(", ", SubscribedTopics));
-                await MqttClient.UnsubscribeAsync(SubscribedTopics).ConfigureAwait(false);
+                await MqttClient.UnsubscribeAsync(SubscribedTopics)
+                    .ConfigureAwait(false);
             }
             else
             {
@@ -267,7 +280,7 @@ namespace HomeAutio.Mqtt.Core
             {
                 // Dispose managed state (managed objects).
                 if (MqttClient != null)
-                    (MqttClient as IDisposable)?.Dispose();
+                    MqttClient.Dispose();
             }
 
             _disposed = true;
