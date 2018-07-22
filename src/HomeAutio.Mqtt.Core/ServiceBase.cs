@@ -214,20 +214,13 @@ namespace HomeAutio.Mqtt.Core
         /// <returns>Awaitable <see cref="Task" />.</returns>
         protected virtual async Task SubscribeAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (MqttClient.IsConnected)
-            {
-                _serviceLog.LogInformation("MQTT subscribing to the following topics: " + string.Join(", ", SubscribedTopics));
-                await MqttClient.SubscribeAsync(SubscribedTopics
-                    .Select(topic => new TopicFilterBuilder()
-                        .WithTopic(topic)
-                        .WithAtLeastOnceQoS()
-                        .Build()))
-                    .ConfigureAwait(false);
-            }
-            else
-            {
-                _serviceLog.LogWarning("MQTT could not subscribe to topics on disconnected client");
-            }
+            _serviceLog.LogInformation("MQTT subscribing to the following topics: " + string.Join(", ", SubscribedTopics));
+            await MqttClient.SubscribeAsync(SubscribedTopics
+                .Select(topic => new TopicFilterBuilder()
+                    .WithTopic(topic)
+                    .WithAtLeastOnceQoS()
+                    .Build()))
+                .ConfigureAwait(false);
         }
 
         /// <summary>
@@ -237,17 +230,9 @@ namespace HomeAutio.Mqtt.Core
         /// <returns>Awaitable <see cref="Task" />.</returns>
         protected virtual async Task Unsubscribe(CancellationToken cancellationToken = default(CancellationToken))
         {
-            // Wipe subscriptions
-            if (MqttClient.IsConnected)
-            {
-                _serviceLog.LogInformation("MQTT unsubscribing to the following topics: " + string.Join(", ", SubscribedTopics));
-                await MqttClient.UnsubscribeAsync(SubscribedTopics)
-                    .ConfigureAwait(false);
-            }
-            else
-            {
-                _serviceLog.LogWarning("MQTT could not unsubscribe from topics on disconnected client");
-            }
+            _serviceLog.LogInformation("MQTT unsubscribing to the following topics: " + string.Join(", ", SubscribedTopics));
+            await MqttClient.UnsubscribeAsync(SubscribedTopics)
+                .ConfigureAwait(false);
         }
 
         #endregion
