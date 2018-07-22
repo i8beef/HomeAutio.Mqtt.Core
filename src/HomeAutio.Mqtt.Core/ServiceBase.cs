@@ -132,12 +132,12 @@ namespace HomeAutio.Mqtt.Core
                 .WithClientOptions(optionsBuilder.Build())
                 .Build();
 
-            // Connect to MQTT
-            await MqttClient.StartAsync(managedOptions)
-                .ConfigureAwait(false);
-
             // Subscribe to MQTT messages
             await SubscribeAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            // Connect to MQTT
+            await MqttClient.StartAsync(managedOptions)
                 .ConfigureAwait(false);
 
             // Call startup on inheriting service class
