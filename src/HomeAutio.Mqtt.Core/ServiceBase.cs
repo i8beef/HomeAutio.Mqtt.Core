@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Diagnostics;
+using MQTTnet.Extensions.ManagedClient;
 
 namespace HomeAutio.Mqtt.Core
 {
@@ -18,10 +19,7 @@ namespace HomeAutio.Mqtt.Core
     {
         private readonly ILogger<ServiceBase> _serviceLog;
 
-        private readonly string _brokerIp;
-        private readonly int _brokerPort;
-        private readonly string _brokerUsername;
-        private readonly string _brokerPassword;
+        private readonly BrokerSettings _brokerSettings;
 
         private bool _disposed = false;
         private bool _stopping;
@@ -29,28 +27,16 @@ namespace HomeAutio.Mqtt.Core
         /// <summary>
         /// Initializes a new instance of the <see cref="ServiceBase"/> class.
         /// </summary>
-        /// <param name="applicationLifetime">Application lifetime instance.</param>
         /// <param name="logger">Logging instance.</param>
-        /// <param name="brokerIp">MQTT broker IP.</param>
-        /// <param name="brokerPort">MQTT broker port.</param>
-        /// <param name="brokerUsername">MQTT broker username.</param>
-        /// <param name="brokerPassword">MQTT broker password.</param>
+        /// <param name="brokerSettings">MQTT broker settings.</param>
         /// <param name="topicRoot">MQTT topic root.</param>
         public ServiceBase(
-            IApplicationLifetime applicationLifetime,
             ILogger<ServiceBase> logger,
-            string brokerIp,
-            int brokerPort,
-            string brokerUsername,
-            string brokerPassword,
+            BrokerSettings brokerSettings,
             string topicRoot)
         {
-            ApplicationLifetime = applicationLifetime;
             _serviceLog = logger;
-            _brokerIp = brokerIp;
-            _brokerPort = brokerPort;
-            _brokerUsername = brokerUsername;
-            _brokerPassword = brokerPassword;
+            _brokerSettings = brokerSettings;
             TopicRoot = topicRoot;
 
             // Setup mqtt client
@@ -59,14 +45,9 @@ namespace HomeAutio.Mqtt.Core
         }
 
         /// <summary>
-        /// Application lifetime for control and eventing.
-        /// </summary>
-        protected IApplicationLifetime ApplicationLifetime { get; private set; }
-
-        /// <summary>
         /// MQTT client.
         /// </summary>
-        protected IMqttClient MqttClient { get; private set; } = new MqttFactory().CreateMqttClient();
+        protected IManagedMqttClient MqttClient { get; private set; } = new MqttFactory().CreateManagedMqttClient();
 
         /// <summary>
         /// MQTT client id.
@@ -111,12 +92,12 @@ namespace HomeAutio.Mqtt.Core
 
             // Log connect and disconnect events
             MqttClient.Connected += (sender, e) => _serviceLog.LogInformation("MQTT Connection established");
+            MqttClient.ConnectingFailed += (sender, e) => _serviceLog.LogWarning("MQTT Connection failed, retrying...");
             MqttClient.Disconnected += (sender, e) =>
             {
                 if (!_stopping)
                 {
-                    _serviceLog.LogInformation("MQTT Connection closed unexpectedly");
-                    ApplicationLifetime.StopApplication();
+                    _serviceLog.LogInformation("MQTT Connection closed unexpectedly, reconnecting...");
                 }
                 else
                 {
@@ -137,16 +118,22 @@ namespace HomeAutio.Mqtt.Core
             _serviceLog.LogInformation("Service start initiated");
             _stopping = false;
 
+            // MQTT client options
             var optionsBuilder = new MqttClientOptionsBuilder()
-                .WithTcpServer(_brokerIp, _brokerPort)
+                .WithTcpServer(_brokerSettings.BrokerIp, _brokerSettings.BrokerPort)
                 .WithClientId(MqttClientId.ToString())
                 .WithCleanSession();
 
-            if (!string.IsNullOrEmpty(_brokerUsername) && !string.IsNullOrEmpty(_brokerPassword))
-                optionsBuilder.WithCredentials(_brokerUsername, _brokerPassword);
+            if (!string.IsNullOrEmpty(_brokerSettings.BrokerUsername) && !string.IsNullOrEmpty(_brokerSettings.BrokerPassword))
+                optionsBuilder.WithCredentials(_brokerSettings.BrokerUsername, _brokerSettings.BrokerPassword);
+
+            var managedOptions = new ManagedMqttClientOptionsBuilder()
+                .WithAutoReconnectDelay(TimeSpan.FromSeconds(_brokerSettings.BrokerReconnectDelay))
+                .WithClientOptions(optionsBuilder.Build())
+                .Build();
 
             // Connect to MQTT
-            await MqttClient.ConnectAsync(optionsBuilder.Build())
+            await MqttClient.StartAsync(managedOptions)
                 .ConfigureAwait(false);
 
             // Subscribe to MQTT messages
@@ -182,7 +169,7 @@ namespace HomeAutio.Mqtt.Core
                 {
                     await Unsubscribe(cancellationToken)
                         .ConfigureAwait(false);
-                    await MqttClient.DisconnectAsync()
+                    await MqttClient.StopAsync()
                         .ConfigureAwait(false);
                 }
             }
@@ -229,7 +216,7 @@ namespace HomeAutio.Mqtt.Core
         {
             if (MqttClient.IsConnected)
             {
-                _serviceLog.LogDebug("MQTT subscribing to the following topics: " + string.Join(", ", SubscribedTopics));
+                _serviceLog.LogInformation("MQTT subscribing to the following topics: " + string.Join(", ", SubscribedTopics));
                 await MqttClient.SubscribeAsync(SubscribedTopics
                     .Select(topic => new TopicFilterBuilder()
                         .WithTopic(topic)
@@ -253,7 +240,7 @@ namespace HomeAutio.Mqtt.Core
             // Wipe subscriptions
             if (MqttClient.IsConnected)
             {
-                _serviceLog.LogDebug("MQTT unsubscribing to the following topics: " + string.Join(", ", SubscribedTopics));
+                _serviceLog.LogInformation("MQTT unsubscribing to the following topics: " + string.Join(", ", SubscribedTopics));
                 await MqttClient.UnsubscribeAsync(SubscribedTopics)
                     .ConfigureAwait(false);
             }
