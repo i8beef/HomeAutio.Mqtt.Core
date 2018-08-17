@@ -91,7 +91,19 @@ namespace HomeAutio.Mqtt.Core
             };
 
             // Log connect and disconnect events
-            MqttClient.Connected += (sender, e) => _serviceLog.LogInformation("MQTT Connection established");
+            MqttClient.Connected += async (sender, e) =>
+            {
+                // Publish connected announcement, due to structure of these apps, it is always assumed the device is connected
+                await MqttClient.PublishAsync(new MqttApplicationMessageBuilder()
+                    .WithTopic($"{TopicRoot}/connected")
+                    .WithPayload(((int)ConnectionStatus.ConnectedMqttAndDevice).ToString())
+                    .WithAtLeastOnceQoS()
+                    .WithRetainFlag()
+                    .Build());
+
+                _serviceLog.LogInformation("MQTT Connection established");
+            };
+
             MqttClient.ConnectingFailed += (sender, e) => _serviceLog.LogWarning("MQTT Connection failed, retrying...");
             MqttClient.Disconnected += (sender, e) =>
             {
@@ -118,12 +130,22 @@ namespace HomeAutio.Mqtt.Core
             _serviceLog.LogInformation("Service start initiated");
             _stopping = false;
 
+            // MQTT will message
+            var willMessage = new MqttApplicationMessageBuilder()
+                .WithTopic($"{TopicRoot}/connected")
+                .WithPayload(((int)ConnectionStatus.Disconnected).ToString())
+                .WithAtLeastOnceQoS()
+                .WithRetainFlag()
+                .Build();
+
             // MQTT client options
             var optionsBuilder = new MqttClientOptionsBuilder()
                 .WithTcpServer(_brokerSettings.BrokerIp, _brokerSettings.BrokerPort)
                 .WithClientId(MqttClientId.ToString())
-                .WithCleanSession();
+                .WithCleanSession()
+                .WithWillMessage(willMessage);
 
+            // MQTT credentials
             if (!string.IsNullOrEmpty(_brokerSettings.BrokerUsername) && !string.IsNullOrEmpty(_brokerSettings.BrokerPassword))
                 optionsBuilder.WithCredentials(_brokerSettings.BrokerUsername, _brokerSettings.BrokerPassword);
 
