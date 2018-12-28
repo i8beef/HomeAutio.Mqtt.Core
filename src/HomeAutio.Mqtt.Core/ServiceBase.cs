@@ -189,7 +189,15 @@ namespace HomeAutio.Mqtt.Core
                 // Graceful MQTT disconnect
                 if (MqttClient.IsConnected)
                 {
-                    await Unsubscribe(cancellationToken)
+                    // Publish disconnected announcement
+                    await MqttClient.PublishAsync(new MqttApplicationMessageBuilder()
+                        .WithTopic($"{TopicRoot}/connected")
+                        .WithPayload(((int)ConnectionStatus.Disconnected).ToString())
+                        .WithAtLeastOnceQoS()
+                        .WithRetainFlag()
+                        .Build());
+
+                    await UnsubscribeAsync(cancellationToken)
                         .ConfigureAwait(false);
                     await MqttClient.StopAsync()
                         .ConfigureAwait(false);
@@ -250,7 +258,7 @@ namespace HomeAutio.Mqtt.Core
         /// </summary>
         /// <param name="cancellationToken">Cancelation token.</param>
         /// <returns>Awaitable <see cref="Task" />.</returns>
-        protected virtual async Task Unsubscribe(CancellationToken cancellationToken = default(CancellationToken))
+        protected virtual async Task UnsubscribeAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             _serviceLog.LogInformation("MQTT unsubscribing to the following topics: " + string.Join(", ", SubscribedTopics));
             await MqttClient.UnsubscribeAsync(SubscribedTopics)

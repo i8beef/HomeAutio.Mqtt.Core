@@ -30,8 +30,8 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="2.1.1" />
-    <PackageReference Include="MQTTnet" Version="2.8.2" />
-    <PackageReference Include="MQTTnet.Extensions.ManagedClient" Version="2.8.2" />
+    <PackageReference Include="MQTTnet" Version="2.8.5" />
+    <PackageReference Include="MQTTnet.Extensions.ManagedClient" Version="2.8.5" />
   </ItemGroup>
 
 </Project>
