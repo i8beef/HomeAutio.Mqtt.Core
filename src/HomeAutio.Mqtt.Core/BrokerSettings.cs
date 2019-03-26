@@ -33,6 +33,6 @@
         /// <summary>
         /// Whether to use TLS for the connection or not. Defaults to false.
         /// </summary>
-        public bool UseTls {get; set; } = false;
+        public bool BrokerUseTls { get; set; } = false;
     }
 }
