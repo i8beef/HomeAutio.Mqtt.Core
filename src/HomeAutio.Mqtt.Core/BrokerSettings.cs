@@ -29,5 +29,10 @@
         /// Broker reconnect delay in seconds, default 5.
         /// </summary>
         public int BrokerReconnectDelay { get; set; } = 5;
+
+        /// <summary>
+        /// Whether to use TLS for the connection or not. Defaults to false.
+        /// </summary>
+        public bool UseTls {get; set; } = false;
     }
 }
