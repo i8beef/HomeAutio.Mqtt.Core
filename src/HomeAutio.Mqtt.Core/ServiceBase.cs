@@ -145,6 +145,10 @@ namespace HomeAutio.Mqtt.Core
                 .WithCleanSession()
                 .WithWillMessage(willMessage);
 
+            // MQTT TLS support
+            if (_brokerSettings.BrokerUseTls)
+                optionsBuilder.WithTls();
+
             // MQTT credentials
             if (!string.IsNullOrEmpty(_brokerSettings.BrokerUsername) && !string.IsNullOrEmpty(_brokerSettings.BrokerPassword))
                 optionsBuilder.WithCredentials(_brokerSettings.BrokerUsername, _brokerSettings.BrokerPassword);
