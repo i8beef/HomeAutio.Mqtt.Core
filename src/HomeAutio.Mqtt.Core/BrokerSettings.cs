@@ -34,5 +34,10 @@
         /// Whether to use TLS for the connection or not. Defaults to false.
         /// </summary>
         public bool BrokerUseTls { get; set; } = false;
+
+        /// <summary>
+        /// Broker TLS settings.
+        /// </summary>
+        public BrokerTlsSettings BrokerTlsSettings { get; set; }
     }
 }

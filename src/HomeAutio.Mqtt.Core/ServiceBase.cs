@@ -147,7 +147,22 @@ namespace HomeAutio.Mqtt.Core
 
             // MQTT TLS support
             if (_brokerSettings.BrokerUseTls)
-                optionsBuilder.WithTls();
+            {
+                if (_brokerSettings.BrokerTlsSettings == null)
+                    throw new ArgumentNullException(nameof(_brokerSettings.BrokerTlsSettings));
+
+                var tlsOptions = new MqttClientOptionsBuilderTlsParameters
+                {
+                    UseTls = _brokerSettings.BrokerUseTls,
+                    AllowUntrustedCertificates = _brokerSettings.BrokerTlsSettings.AllowUntrustedCertificates,
+                    IgnoreCertificateChainErrors = _brokerSettings.BrokerTlsSettings.IgnoreCertificateChainErrors,
+                    IgnoreCertificateRevocationErrors = _brokerSettings.BrokerTlsSettings.IgnoreCertificateRevocationErrors,
+                    SslProtocol = _brokerSettings.BrokerTlsSettings.SslProtocol,
+                    Certificates = _brokerSettings.BrokerTlsSettings.Certificates?.Select(x => x.Export(System.Security.Cryptography.X509Certificates.X509ContentType.SerializedCert))
+                };
+
+                optionsBuilder.WithTls(tlsOptions);
+            }
 
             // MQTT credentials
             if (!string.IsNullOrEmpty(_brokerSettings.BrokerUsername) && !string.IsNullOrEmpty(_brokerSettings.BrokerPassword))
