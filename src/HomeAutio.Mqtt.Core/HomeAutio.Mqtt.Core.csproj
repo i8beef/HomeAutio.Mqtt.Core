@@ -5,7 +5,7 @@
     <LangVersion>latest</LangVersion>
     <Authors>Michael Hallock</Authors>
     <Company>Michael Hallock</Company>
-    <Copyright>Copyright ©  2016</Copyright>
+    <Copyright>Copyright © 2016</Copyright>
     <Description>Base library for HomeAutio Mqtt bridges</Description>
     <PackageLicenseUrl>https://github.com/i8beef/HomeAutio.Mqtt.Core/blob/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/i8beef/HomeAutio.Mqtt.Core</PackageProjectUrl>
