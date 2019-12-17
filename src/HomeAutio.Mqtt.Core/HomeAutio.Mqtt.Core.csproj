@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
     <Authors>Michael Hallock</Authors>
     <Company>Michael Hallock</Company>
     <Copyright>Copyright ©  2016</Copyright>
@@ -26,12 +27,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="I8Beef.CodeAnalysis.RuleSet" Version="1.0.11">
+    <PackageReference Include="ConfigureAwaitChecker.Analyzer" Version="4.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="I8Beef.CodeAnalysis.RuleSet" Version="1.0.15">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="2.1.1" />
-    <PackageReference Include="MQTTnet" Version="2.8.5" />
-    <PackageReference Include="MQTTnet.Extensions.ManagedClient" Version="2.8.5" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="3.1.0" />
+    <PackageReference Include="MQTTnet" Version="3.0.8" />
+    <PackageReference Include="MQTTnet.Extensions.ManagedClient" Version="3.0.8" />
   </ItemGroup>
 
 </Project>

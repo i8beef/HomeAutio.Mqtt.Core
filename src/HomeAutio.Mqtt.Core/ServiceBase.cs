@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MQTTnet;
 using MQTTnet.Client;
+using MQTTnet.Client.Options;
 using MQTTnet.Diagnostics;
 using MQTTnet.Extensions.ManagedClient;
 
@@ -41,7 +42,7 @@ namespace HomeAutio.Mqtt.Core
 
             // Setup mqtt client
             SetupMqttLogging();
-            MqttClient.ApplicationMessageReceived += Mqtt_MqttMsgPublishReceived;
+            MqttClient.UseApplicationMessageReceivedHandler(e => Mqtt_MqttMsgPublishReceived(e));
         }
 
         /// <summary>
@@ -91,7 +92,7 @@ namespace HomeAutio.Mqtt.Core
             };
 
             // Log connect and disconnect events
-            MqttClient.Connected += async (sender, e) =>
+            MqttClient.UseConnectedHandler(async e =>
             {
                 // Publish connected announcement, due to structure of these apps, it is always assumed the device is connected
                 await MqttClient.PublishAsync(new MqttApplicationMessageBuilder()
@@ -99,13 +100,13 @@ namespace HomeAutio.Mqtt.Core
                     .WithPayload(((int)ConnectionStatus.ConnectedMqttAndDevice).ToString())
                     .WithAtLeastOnceQoS()
                     .WithRetainFlag()
-                    .Build());
+                    .Build()).ConfigureAwait(false);
 
                 _serviceLog.LogInformation("MQTT Connection established");
-            };
+            });
 
-            MqttClient.ConnectingFailed += (sender, e) => _serviceLog.LogWarning("MQTT Connection failed, retrying...");
-            MqttClient.Disconnected += (sender, e) =>
+            MqttClient.ConnectingFailedHandler = new ConnectingFailedHandlerDelegate(e => _serviceLog.LogWarning("MQTT Connection failed, retrying..."));
+            MqttClient.UseDisconnectedHandler(e =>
             {
                 if (!_stopping)
                 {
@@ -115,7 +116,7 @@ namespace HomeAutio.Mqtt.Core
                 {
                     _serviceLog.LogInformation("MQTT Connection closed");
                 }
-            };
+            });
         }
 
         #region Service implementation
@@ -125,7 +126,7 @@ namespace HomeAutio.Mqtt.Core
         /// </summary>
         /// <param name="cancellationToken">Cancelation token.</param>
         /// <returns>Awaitable <see cref="Task" />.</returns>
-        public async Task StartAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public async Task StartAsync(CancellationToken cancellationToken = default)
         {
             _serviceLog.LogInformation("Service start initiated");
             _stopping = false;
@@ -193,7 +194,7 @@ namespace HomeAutio.Mqtt.Core
         /// </summary>
         /// <param name="cancellationToken">Cancelation token.</param>
         /// <returns>Awaitable <see cref="Task" />.</returns>
-        public async Task StopAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public async Task StopAsync(CancellationToken cancellationToken = default)
         {
             _serviceLog.LogInformation("Service stop initiated");
 
@@ -214,7 +215,7 @@ namespace HomeAutio.Mqtt.Core
                         .WithPayload(((int)ConnectionStatus.Disconnected).ToString())
                         .WithAtLeastOnceQoS()
                         .WithRetainFlag()
-                        .Build());
+                        .Build()).ConfigureAwait(false);
 
                     await UnsubscribeAsync(cancellationToken)
                         .ConfigureAwait(false);
@@ -252,16 +253,15 @@ namespace HomeAutio.Mqtt.Core
         /// <summary>
         /// Handles subscribed commands published to MQTT.
         /// </summary>
-        /// <param name="sender">Event sender.</param>
         /// <param name="e">Event args.</param>
-        protected abstract void Mqtt_MqttMsgPublishReceived(object sender, MqttApplicationMessageReceivedEventArgs e);
+        protected abstract void Mqtt_MqttMsgPublishReceived(MqttApplicationMessageReceivedEventArgs e);
 
         /// <summary>
         /// Subscribes to the MQTT topics in SubscribedTopics.
         /// </summary>
         /// <param name="cancellationToken">Cancelation token.</param>
         /// <returns>Awaitable <see cref="Task" />.</returns>
-        protected virtual async Task SubscribeAsync(CancellationToken cancellationToken = default(CancellationToken))
+        protected virtual async Task SubscribeAsync(CancellationToken cancellationToken = default)
         {
             _serviceLog.LogInformation("MQTT subscribing to the following topics: " + string.Join(", ", SubscribedTopics));
             await MqttClient.SubscribeAsync(SubscribedTopics
@@ -277,7 +277,7 @@ namespace HomeAutio.Mqtt.Core
         /// </summary>
         /// <param name="cancellationToken">Cancelation token.</param>
         /// <returns>Awaitable <see cref="Task" />.</returns>
-        protected virtual async Task UnsubscribeAsync(CancellationToken cancellationToken = default(CancellationToken))
+        protected virtual async Task UnsubscribeAsync(CancellationToken cancellationToken = default)
         {
             _serviceLog.LogInformation("MQTT unsubscribing to the following topics: " + string.Join(", ", SubscribedTopics));
             await MqttClient.UnsubscribeAsync(SubscribedTopics)
