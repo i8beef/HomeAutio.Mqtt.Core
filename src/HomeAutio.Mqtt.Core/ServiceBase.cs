@@ -210,12 +210,14 @@ namespace HomeAutio.Mqtt.Core
                 if (MqttClient.IsConnected)
                 {
                     // Publish disconnected announcement
-                    await MqttClient.PublishAsync(new MqttApplicationMessageBuilder()
-                        .WithTopic($"{TopicRoot}/connected")
-                        .WithPayload(((int)ConnectionStatus.Disconnected).ToString())
-                        .WithAtLeastOnceQoS()
-                        .WithRetainFlag()
-                        .Build()).ConfigureAwait(false);
+                    await MqttClient.PublishAsync(
+                        new MqttApplicationMessageBuilder()
+                            .WithTopic($"{TopicRoot}/connected")
+                            .WithPayload(((int)ConnectionStatus.Disconnected).ToString())
+                            .WithAtLeastOnceQoS()
+                            .WithRetainFlag()
+                            .Build(),
+                        cancellationToken).ConfigureAwait(false);
 
                     await UnsubscribeAsync(cancellationToken)
                         .ConfigureAwait(false);
