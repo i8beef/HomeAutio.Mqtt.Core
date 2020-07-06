@@ -73,20 +73,20 @@ namespace HomeAutio.Mqtt.Core
             // Log trace messages
             MqttNetGlobalLogger.LogMessagePublished += (sender, e) =>
             {
-                switch (e.TraceMessage.Level)
+                switch (e.LogMessage.Level)
                 {
                     case MqttNetLogLevel.Error:
-                        _serviceLog.LogError(e.TraceMessage.Message, e.TraceMessage.Exception);
+                        _serviceLog.LogError(e.LogMessage.Message, e.LogMessage.Exception);
                         break;
                     case MqttNetLogLevel.Warning:
-                        _serviceLog.LogWarning(e.TraceMessage.Message);
+                        _serviceLog.LogWarning(e.LogMessage.Message);
                         break;
                     case MqttNetLogLevel.Info:
-                        _serviceLog.LogInformation(e.TraceMessage.Message);
+                        _serviceLog.LogInformation(e.LogMessage.Message);
                         break;
                     case MqttNetLogLevel.Verbose:
                     default:
-                        _serviceLog.LogTrace(e.TraceMessage.Message);
+                        _serviceLog.LogTrace(e.LogMessage.Message);
                         break;
                 }
             };
@@ -159,7 +159,7 @@ namespace HomeAutio.Mqtt.Core
                     IgnoreCertificateChainErrors = _brokerSettings.BrokerTlsSettings.IgnoreCertificateChainErrors,
                     IgnoreCertificateRevocationErrors = _brokerSettings.BrokerTlsSettings.IgnoreCertificateRevocationErrors,
                     SslProtocol = _brokerSettings.BrokerTlsSettings.SslProtocol,
-                    Certificates = _brokerSettings.BrokerTlsSettings.Certificates?.Select(x => x.Export(System.Security.Cryptography.X509Certificates.X509ContentType.SerializedCert))
+                    Certificates = _brokerSettings.BrokerTlsSettings.Certificates
                 };
 
                 optionsBuilder.WithTls(tlsOptions);
@@ -267,7 +267,7 @@ namespace HomeAutio.Mqtt.Core
         {
             _serviceLog.LogInformation("MQTT subscribing to the following topics: " + string.Join(", ", SubscribedTopics));
             await MqttClient.SubscribeAsync(SubscribedTopics
-                .Select(topic => new TopicFilterBuilder()
+                .Select(topic => new MqttTopicFilterBuilder()
                     .WithTopic(topic)
                     .WithAtLeastOnceQoS()
                     .Build()))
