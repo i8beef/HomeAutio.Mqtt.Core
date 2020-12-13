@@ -17,6 +17,7 @@ before_build:
 build:
   publish_nuget: true
   publish_nuget_symbols: true
+  use_snupkg_format: true
   verbosity: minimal
 artifacts:
 - path: src\HomeAutio.Mqtt.Core\bin\$(configuration)\netstandard2.0
@@ -24,6 +25,8 @@ artifacts:
 deploy:
 - provider: NuGet
   api_key: $(NUGET_API_KEY)
+  artifact: /.*(\.|\.s)nupkg/
+  skip_symbols: false
   on:
     branch: release
 - provider: GitHub
