@@ -1,5 +1,5 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/d2604662svq90a6x/branch/release?svg=true)](https://ci.appveyor.com/project/i8beef/homeautio-mqtt-core/branch/release)
-[![Build status](https://ci.appveyor.com/api/projects/status/d2604662svq90a6x/branch/master?svg=true)](https://ci.appveyor.com/project/i8beef/homeautio-mqtt-core/branch/master)
+![Build](https://github.com/i8beef/HomeAutio.Mqtt.Core/actions/workflows/build.yml/badge.svg?branch=master)
+![Release](https://github.com/i8beef/HomeAutio.Mqtt.Core/actions/workflows/release.yml/badge.svg)
 
 # HomeAutio.Mqtt.Core
 Utility library for creating MQTT bridge services
