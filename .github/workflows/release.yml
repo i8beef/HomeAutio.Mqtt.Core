@@ -5,10 +5,10 @@ on:
       - "v[0-9]+.[0-9]+.[0-9]+.[0-9]+"
 
 env:
-  DOTNETVERSION: "5.0.x"
+  DOTNETVERSION: "7.0.x"
   APP: "HomeAutio.Mqtt.Core"
   SOLUTION: "./src/HomeAutio.Mqtt.Core.sln"
-  BUILDOUTPUTPATH: "./src/HomeAutio.Mqtt.Core/bin/Release/netstandard2.0"
+  BUILDOUTPUTPATH: "./src/HomeAutio.Mqtt.Core/bin/Release/net7.0"
   PACKOUTPUTPATH: "./out"
 
 jobs:
@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup .NET Core SDK ${{ env.DOTNETVERSION }}
-        uses: actions/setup-dotnet@v1.7.2
+        uses: actions/setup-dotnet@v3.0.3
         with:
           dotnet-version: ${{ env.DOTNETVERSION }}
 
