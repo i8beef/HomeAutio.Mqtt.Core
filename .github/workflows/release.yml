@@ -57,7 +57,7 @@ jobs:
 
       - name: Build changelog
         id: gitLog
-        uses: jarrodparkes/git-log-action@1
+        uses: jarrodparkes/git-log-action@1.0.0
         with:
           start: ${{ steps.previousTag.outputs.tag }}
           end: ${{ github.ref }}
