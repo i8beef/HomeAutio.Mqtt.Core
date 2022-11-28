@@ -1,4 +1,4 @@
-﻿namespace HomeAutio.Mqtt.Core
+namespace HomeAutio.Mqtt.Core
 {
     /// <summary>
     /// Broker setings.
@@ -8,36 +8,36 @@
         /// <summary>
         /// Broker IP address.
         /// </summary>
-        public string BrokerIp { get; set; }
+        public required string BrokerIp { get; init; }
 
         /// <summary>
         /// Borker port, default 1883.
         /// </summary>
-        public int BrokerPort { get; set; } = 1883;
+        public int BrokerPort { get; init; } = 1883;
 
         /// <summary>
         /// Broker username.
         /// </summary>
-        public string BrokerUsername { get; set; }
+        public string? BrokerUsername { get; init; }
 
         /// <summary>
         /// Broker password.
         /// </summary>
-        public string BrokerPassword { get; set; }
+        public string? BrokerPassword { get; init; }
 
         /// <summary>
         /// Broker reconnect delay in seconds, default 5.
         /// </summary>
-        public int BrokerReconnectDelay { get; set; } = 5;
+        public int BrokerReconnectDelay { get; init; } = 5;
 
         /// <summary>
         /// Whether to use TLS for the connection or not. Defaults to false.
         /// </summary>
-        public bool BrokerUseTls { get; set; } = false;
+        public bool BrokerUseTls { get; init; }
 
         /// <summary>
         /// Broker TLS settings.
         /// </summary>
-        public BrokerTlsSettings BrokerTlsSettings { get; set; }
+        public BrokerTlsSettings? BrokerTlsSettings { get; init; }
     }
 }
