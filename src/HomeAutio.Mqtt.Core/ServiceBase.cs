@@ -152,6 +152,9 @@ namespace HomeAutio.Mqtt.Core
                     throw new ArgumentException($"BrokerSettings {nameof(_brokerSettings.BrokerTlsSettings)} cannot be null when {nameof(_brokerSettings.BrokerUseTls)} is true");
                 }
 
+                // Temporary fix for https://github.com/dotnet/MQTTnet/issues/1547
+                var certificateValidationHandler = MqttClientDefaultCertificateValidationHandler.Handle;
+
                 var tlsOptions = new MqttClientOptionsBuilderTlsParameters
                 {
                     UseTls = _brokerSettings.BrokerUseTls,
@@ -159,7 +162,8 @@ namespace HomeAutio.Mqtt.Core
                     IgnoreCertificateChainErrors = _brokerSettings.BrokerTlsSettings.IgnoreCertificateChainErrors,
                     IgnoreCertificateRevocationErrors = _brokerSettings.BrokerTlsSettings.IgnoreCertificateRevocationErrors,
                     SslProtocol = _brokerSettings.BrokerTlsSettings.SslProtocol,
-                    Certificates = _brokerSettings.BrokerTlsSettings.Certificates
+                    Certificates = _brokerSettings.BrokerTlsSettings.Certificates,
+                    CertificateValidationHandler = certificateValidationHandler
                 };
 
                 optionsBuilder.WithTls(tlsOptions);
