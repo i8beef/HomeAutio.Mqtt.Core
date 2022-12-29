@@ -28,11 +28,14 @@ jobs:
 
       - name: Get version
         id: version
-        uses: battila7/get-version-action@v2
+        run: echo "version-without-v=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
       - name: Get previous release tag
         id: previousTag
-        uses: sammcoe/get-previous-release-action@v1
+        run: |
+          PREV_REV=$(git rev-list --tags --max-count=1 --skip=1 --no-walk)
+          PREV_TAG=$(git describe --tags ${PREV_REV})
+          echo "tag=${PREV_TAG}" >> $GITHUB_OUTPUT
 
       - name: Install dependencies
         run: dotnet restore ${{ env.SOLUTION }}
