@@ -420,36 +420,46 @@ dotnet_naming_rule.parameters_rule.severity             = warning
 # Ignore globalization issues
 dotnet_analyzer_diagnostic.category-Globalization.severity = none
 
+##########################################
+# Language Rules
+# https://docs.microsoft.com/dotnet/fundamentals/code-analysis/style-rules/language-rules
+##########################################
+
+# .NET Style Rules
+# https://docs.microsoft.com/dotnet/fundamentals/code-analysis/style-rules/language-rules#net-style-rules
 [*.{cs,csx,cake,vb,vbx}]
 # "this" qualifiers
 dotnet_style_qualification_for_field = false:warning
 dotnet_style_qualification_for_property = false:warning
 dotnet_style_qualification_for_method = false:warning
 dotnet_style_qualification_for_event = false:warning
-
 # Expression-level preferences
+dotnet_style_collection_initializer = false:warning
+dotnet_diagnostic.IDE0028.severity = none
 dotnet_style_prefer_compound_assignment = false:warning
 
+# C# Style Rules
+# https://docs.microsoft.com/dotnet/fundamentals/code-analysis/style-rules/language-rules#c-style-rules
 [*.{cs,csx,cake}]
 # Expression-bodied members
 csharp_style_expression_bodied_methods = false:warning
 csharp_style_expression_bodied_constructors = false:warning
-
 # Pattern matching preferences
 csharp_style_prefer_switch_expression = false:warning
-
 # Expression-level preferences
 csharp_style_prefer_range_operator = false:warning
-
+csharp_style_implicit_object_creation_when_type_is_apparent = false:warning
 # Code block preferences
 csharp_prefer_simple_using_statement = false:suggestion
-
 # 'using' directive preferences
 csharp_using_directive_placement = outside_namespace:warning
-
 # Undocumented
 csharp_style_namespace_declarations = block_scoped:warning
 
+##########################################
+# Unnecessary Code Rules
+# https://docs.microsoft.com/dotnet/fundamentals/code-analysis/style-rules/unnecessary-code-rules
+##########################################
 [*.{cs,csx,cake,vb,vbx}]
 # .NET Unnecessary code rules
 dotnet_code_quality_unused_parameters = all:suggestion
@@ -461,6 +471,10 @@ dotnet_diagnostic.IDE0058.severity = none
 csharp_style_unused_value_assignment_preference = discard_variable:none
 dotnet_diagnostic.IDE0059.severity = none
 
+##########################################
+# .NET Naming Rules
+# https://docs.microsoft.com/dotnet/fundamentals/code-analysis/style-rules/naming-rules
+##########################################
 [*.{cs,csx,cake,vb,vbx}]
 # first_underscore_style - The first character must start with an underscore character
 dotnet_naming_style.first_underscore_style.capitalization = camel_case
@@ -504,6 +518,10 @@ dotnet_naming_rule.stylecop_private_fields_must_be_camel_case_rule.style = first
 ##########################################
 # IDE0010: Add missing cases in switch statement
 dotnet_diagnostic.IDE0010.severity = silent
+
+# Disable primary constructor
+csharp_style_prefer_primary_constructors = false
+dotnet_diagnostic.IDE0290.severity = none
 
 # Logging
 # CA1848: Use the LoggerMessage delegates

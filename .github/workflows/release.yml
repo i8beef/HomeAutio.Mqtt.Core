@@ -5,10 +5,10 @@ on:
       - "v[0-9]+.[0-9]+.[0-9]+.[0-9]+"
 
 env:
-  DOTNETVERSION: "7.0.x"
+  DOTNETVERSION: "8.0.x"
   APP: "HomeAutio.Mqtt.Core"
   SOLUTION: "./src/HomeAutio.Mqtt.Core.sln"
-  BUILDOUTPUTPATH: "./src/HomeAutio.Mqtt.Core/bin/Release/net7.0"
+  BUILDOUTPUTPATH: "./src/HomeAutio.Mqtt.Core/bin/Release/net8.0"
   PACKOUTPUTPATH: "./out"
 
 jobs:

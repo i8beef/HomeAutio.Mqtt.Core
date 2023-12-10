@@ -1,10 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
+using HomeAutio.Mqtt.Core.Options;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Diagnostics;
@@ -19,7 +23,7 @@ namespace HomeAutio.Mqtt.Core
     {
         private readonly ILogger<ServiceBase> _serviceLog;
 
-        private readonly BrokerSettings _brokerSettings;
+        private readonly MqttOptions _mqttOptions;
 
         private bool _disposed;
         private bool _stopping;
@@ -28,15 +32,15 @@ namespace HomeAutio.Mqtt.Core
         /// Initializes a new instance of the <see cref="ServiceBase"/> class.
         /// </summary>
         /// <param name="logger">Logging instance.</param>
-        /// <param name="brokerSettings">MQTT broker settings.</param>
+        /// <param name="mqttOptions">MQTT broker settings.</param>
         /// <param name="topicRoot">MQTT topic root.</param>
         public ServiceBase(
             ILogger<ServiceBase> logger,
-            BrokerSettings brokerSettings,
+            IOptions<MqttOptions> mqttOptions,
             string topicRoot)
         {
             _serviceLog = logger;
-            _brokerSettings = brokerSettings;
+            _mqttOptions = mqttOptions.Value;
             TopicRoot = topicRoot;
 
             // Log trace messages
@@ -136,7 +140,7 @@ namespace HomeAutio.Mqtt.Core
 
             // MQTT client options
             var optionsBuilder = new MqttClientOptionsBuilder()
-                .WithTcpServer(_brokerSettings.BrokerIp, _brokerSettings.BrokerPort)
+                .WithTcpServer(_mqttOptions.BrokerIp, _mqttOptions.BrokerPort)
                 .WithClientId(MqttClientId.ToString())
                 .WithCleanSession()
                 .WithWillTopic($"{TopicRoot}/connected")
@@ -145,38 +149,60 @@ namespace HomeAutio.Mqtt.Core
                 .WithWillRetain();
 
             // MQTT TLS support
-            if (_brokerSettings.BrokerUseTls)
+            if (_mqttOptions.BrokerUseTls)
             {
-                if (_brokerSettings.BrokerTlsSettings == null)
+                if (_mqttOptions.BrokerTlsSettings == null)
                 {
-                    throw new ArgumentException($"BrokerSettings {nameof(_brokerSettings.BrokerTlsSettings)} cannot be null when {nameof(_brokerSettings.BrokerUseTls)} is true");
+                    throw new ArgumentException($"BrokerSettings {nameof(_mqttOptions.BrokerTlsSettings)} cannot be null when {nameof(_mqttOptions.BrokerUseTls)} is true");
                 }
 
                 // Temporary fix for https://github.com/dotnet/MQTTnet/issues/1547
                 var certificateValidationHandler = MqttClientDefaultCertificateValidationHandler.Handle;
 
-                var tlsOptions = new MqttClientOptionsBuilderTlsParameters
+                // SSL protocol
+                var sslProtocol = _mqttOptions.BrokerTlsSettings.SslProtocol switch
                 {
-                    UseTls = _brokerSettings.BrokerUseTls,
-                    AllowUntrustedCertificates = _brokerSettings.BrokerTlsSettings.AllowUntrustedCertificates,
-                    IgnoreCertificateChainErrors = _brokerSettings.BrokerTlsSettings.IgnoreCertificateChainErrors,
-                    IgnoreCertificateRevocationErrors = _brokerSettings.BrokerTlsSettings.IgnoreCertificateRevocationErrors,
-                    SslProtocol = _brokerSettings.BrokerTlsSettings.SslProtocol,
-                    Certificates = _brokerSettings.BrokerTlsSettings.Certificates,
+                    "1.2" => System.Security.Authentication.SslProtocols.Tls12,
+                    "1.3" => System.Security.Authentication.SslProtocols.Tls13,
+                    _ => throw new NotSupportedException($"Only TLS 1.2 and 1.3 are supported")
+                };
+
+                // Certificates
+                var brokerTlsCertificates = _mqttOptions.BrokerTlsSettings.Certificates
+                    .Select(x =>
+                    {
+                        if (!File.Exists(x.File))
+                        {
+                            throw new FileNotFoundException($"Broker Certificate '{x.File}' is missing!");
+                        }
+
+                        return !string.IsNullOrEmpty(x.PassPhrase) ?
+                            new X509Certificate2(x.File, x.PassPhrase) :
+                            new X509Certificate2(x.File);
+                    }).ToList();
+
+                var tlsOptions = new MqttClientTlsOptions
+                {
+                    UseTls = _mqttOptions.BrokerUseTls,
+                    AllowUntrustedCertificates = _mqttOptions.BrokerTlsSettings.AllowUntrustedCertificates,
+                    IgnoreCertificateChainErrors = _mqttOptions.BrokerTlsSettings.IgnoreCertificateChainErrors,
+                    IgnoreCertificateRevocationErrors = _mqttOptions.BrokerTlsSettings.IgnoreCertificateRevocationErrors,
+                    SslProtocol = sslProtocol,
+                    ClientCertificatesProvider = new DefaultMqttCertificatesProvider(brokerTlsCertificates),
                     CertificateValidationHandler = certificateValidationHandler
                 };
 
-                optionsBuilder.WithTls(tlsOptions);
+                optionsBuilder.WithTlsOptions(tlsOptions);
             }
 
             // MQTT credentials
-            if (!string.IsNullOrEmpty(_brokerSettings.BrokerUsername) && !string.IsNullOrEmpty(_brokerSettings.BrokerPassword))
+            if (!string.IsNullOrEmpty(_mqttOptions.BrokerUsername) && !string.IsNullOrEmpty(_mqttOptions.BrokerPassword))
             {
-                optionsBuilder.WithCredentials(_brokerSettings.BrokerUsername, _brokerSettings.BrokerPassword);
+                optionsBuilder.WithCredentials(_mqttOptions.BrokerUsername, _mqttOptions.BrokerPassword);
             }
 
             var managedOptions = new ManagedMqttClientOptionsBuilder()
-                .WithAutoReconnectDelay(TimeSpan.FromSeconds(_brokerSettings.BrokerReconnectDelay))
+                .WithAutoReconnectDelay(TimeSpan.FromSeconds(_mqttOptions.BrokerReconnectDelay))
                 .WithClientOptions(optionsBuilder.Build())
                 .Build();
 

@@ -1,37 +1,35 @@
 using System.Collections.Generic;
-using System.Security.Authentication;
-using System.Security.Cryptography.X509Certificates;
 
-namespace HomeAutio.Mqtt.Core
+namespace HomeAutio.Mqtt.Core.Options
 {
     /// <summary>
     /// Broker TLS settings.
     /// </summary>
-    public class BrokerTlsSettings
+    public class MqttTlsOptions
     {
         /// <summary>
         /// Allow untrusted certificates.
         /// </summary>
-        public bool AllowUntrustedCertificates { get; init; }
+        public bool AllowUntrustedCertificates { get; set; }
 
         /// <summary>
         /// Ignore certificate chain errors.
         /// </summary>
-        public bool IgnoreCertificateChainErrors { get; init; }
+        public bool IgnoreCertificateChainErrors { get; set; }
 
         /// <summary>
         /// Ignore certificate revocation errors.
         /// </summary>
-        public bool IgnoreCertificateRevocationErrors { get; init; }
+        public bool IgnoreCertificateRevocationErrors { get; set; }
 
         /// <summary>
         /// SSL protocol.
         /// </summary>
-        public SslProtocols SslProtocol { get; init; } = SslProtocols.Tls12;
+        public string SslProtocol { get; set; } = "1.2";
 
         /// <summary>
         /// Certificates for CS / client certificate auth.
         /// </summary>
-        public IList<X509Certificate2> Certificates { get; init; } = new List<X509Certificate2>();
+        public IList<MqttTlsCertificateInfo> Certificates { get; set; } = new List<MqttTlsCertificateInfo>();
     }
 }
